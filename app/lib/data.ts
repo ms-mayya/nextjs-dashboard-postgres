@@ -229,3 +229,21 @@ export async function getUser(email: string) {
     throw new Error('Failed to fetch user.');
   }
 }
+
+export async function getCardData() {
+  const totalCustomers = await sql<{
+    count: number;
+  }>`SELECT COUNT(*) AS count FROM customers`;
+  const invoiceStatus = await sql<{
+    count: number;
+    paid: number;
+    pending: number;
+  }>`SELECT COUNT(*) AS count, SUM(amount) AS paid, SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) AS pending FROM invoices`;
+
+  return {
+    numberOfCustomers: totalCustomers.rows[0].count,
+    numberOfInvoices: invoiceStatus.rows[0].count,
+    totalPaidInvoices: formatCurrency(invoiceStatus.rows[0].paid),
+    totalPendingInvoices: formatCurrency(invoiceStatus.rows[0].pending),
+  };
+}
